@@ -22,7 +22,7 @@ jobs:
     - stage: "Testing"
       name: "Lint checking"
       script:
-        - docker run --mount src=$TRAVIS_BUILD_DIR,type=bind ivanpondal/alpine-latex /bin/sh bash -c 'for i in *.tex; do lacheck "$i" > "$i.log"; done; for i in *.tex.log; do cat "$i"; [ -s "$i" ] && exit 1; done; exit 0'
+        - docker run --rm -v $TRAVIS_BUILD_FIR:/workdir:z ivanpondal/alpine-latex /bin/sh bash -c 'for i in *.tex; do lacheck "$i" > "$i.log"; done; for i in *.tex.log; do cat "$i"; [ -s "$i" ] && exit 1; done; exit 0'
 
 branches:
   except:
