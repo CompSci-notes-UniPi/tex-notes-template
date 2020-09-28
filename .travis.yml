@@ -5,17 +5,24 @@ sudo: required
 language: generic
 services: docker
 
-script:
-  - docker run --mount src=$TRAVIS_BUILD_DIR,target=/usr/src/tex,type=bind dxjoke/tectonic-docker /bin/sh -c 'for i in *.tex; do tectonic $i; done'
-
-after_success:
-  - body="**Latest revision**\n";
-    for i in *.pdf; do
-            body+="[$i](https://github.com/$TRAVIS_REPO_SLUG/releases/download/continuous/main.pdf)\n";
-    done;
-    export UPLOADTOOL_BODY=$body
-  - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
-  - bash upload.sh *.pdf;
+jobs:
+  include:
+    - stage: "Compile"
+      name: "Compiling document(s)"  
+      script:
+        - docker run --mount src=$TRAVIS_BUILD_DIR,target=/usr/src/tex,type=bind dxjoke/tectonic-docker /bin/sh -c 'for i in *.tex; do tectonic $i; done'
+      after_success:
+        - body="**Latest revision**\n";
+          for i in *.pdf; do
+              body+="[$i](https://github.com/$TRAVIS_REPO_SLUG/releases/download/continuous/main.pdf)\n";
+          done;
+          export UPLOADTOOL_BODY=$body
+        - wget -c https://github.com/probonopd/uploadtool/raw/master/upload.sh
+        - test $TRAVIS_BRANCH = "master" && test $TRAVIS_PULL_REQUEST = "false" && bash upload.sh *.pdf;
+    - stage: "Testing"
+      name: "Lint checking"
+      script:
+        - docker run --mount src=$TRAVIS_BUILD_DIR,type=bind ivanpondal/alpine-latex /bin/sh bash -c 'for i in *.tex; do lacheck "$i" > "$i.log"; done; for i in *.tex.log; do cat "$i"; [ -s "$i" ] && exit 1; done; exit 0'
 
 branches:
   except:
